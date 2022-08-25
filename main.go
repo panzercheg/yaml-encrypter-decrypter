@@ -18,7 +18,7 @@ import (
 
 //global variables
 var envWhiteSpaces int
-var valuesForFormatting bool = false
+var valuesForFormatting = false
 var tmpYamlText []string
 
 func main() {
@@ -36,6 +36,7 @@ func main() {
 	flagDebug := flag.String("debug", "false", "debug mode, print encode/decode to stdout")
 	flagEncryptValue := flag.String("encrypt", "", "value to encrypt")
 	flagDecryptValue := flag.String("decrypt", "", "value to decrypt")
+	flagVerbose := flag.String("verbose", "false", "verbose file")
 	flag.Parse()
 
 	filename := *flagFile
@@ -44,6 +45,7 @@ func main() {
 	debug := *flagDebug
 	encryptValue := *flagEncryptValue
 	decryptValue := *flagDecryptValue
+	verbose := *flagVerbose
 	// for @kpogonea
 	const AES = "AES256:"
 
@@ -86,22 +88,22 @@ func main() {
 
 			encrypted, err := encryptAES(key, value)
 			if err != nil {
-				log.Fatalf("something wrong")
+				log.Fatalf("something wrong - %s", err)
 			}
 			matchedAesEncrypted, _ := regexp.MatchString(AES, value)
 			// check file is encrypted
 			if !matchedAesEncrypted {
-				//if debug == "true" {
-				//	if stringArray[0] == "#" || stringArray[0] == "# " {
-				//		fmt.Println(eachLn)
-				//	} else {
-				//		if value != "" {
-				//			fmt.Println(whitespaces + stringArray[0] + " " + AES + encrypted)
-				//		} else {
-				//			fmt.Println(whitespaces + stringArray[0] + value)
-				//		}
-				//	}
-				//}
+				if verbose == "true" {
+					if stringArray[0] == "#" || stringArray[0] == "# " {
+						fmt.Println(eachLn)
+					} else {
+						if value != "" {
+							fmt.Println(whitespaces + stringArray[0] + " " + AES + encrypted)
+						} else {
+							fmt.Println(whitespaces + stringArray[0] + value)
+						}
+					}
+				}
 				//check if line is empty
 				if eachLn == "" {
 					tmpYamlText = append(tmpYamlText, eachLn)
@@ -125,17 +127,17 @@ func main() {
 				if err != nil {
 					log.Fatalf("something wrong during decrypt")
 				}
-				//if debug == "true" {
-				//	fmt.Println(whitespaces + stringArray[0] + " " + decrypted)
-				//}
+				if verbose == "true" {
+					fmt.Println(whitespaces + stringArray[0] + " " + decrypted)
+				}
 				stringArray[1] = decrypted
 				tmpYamlText = append(tmpYamlText, whitespaces+strings.Join(stringArray, " "))
 
 			}
 		} else {
-			//if debug == "true" {
-			//	fmt.Println(eachLn)
-			//}
+			if verbose == "true" {
+				fmt.Println(eachLn)
+			}
 			tmpYamlText = append(tmpYamlText, eachLn)
 		}
 		matchedEnvVariable, _ := regexp.MatchString(env, eachLn)
@@ -155,8 +157,14 @@ func main() {
 		for _, data := range tmpYamlText {
 			_, _ = datawriter.WriteString(data + "\n")
 		}
-		datawriter.Flush()
-		file.Close()
+		err = datawriter.Flush()
+		if err != nil {
+			return
+		}
+		err = file.Close()
+		if err != nil {
+			return
+		}
 	}
 }
 
@@ -174,7 +182,10 @@ func readFile(filename string) (text []string) {
 	for scanner.Scan() {
 		text = append(text, scanner.Text())
 	}
-	file.Close()
+	err = file.Close()
+	if err != nil {
+		return nil
+	}
 	return text
 
 }
@@ -185,7 +196,7 @@ func encryptAES(password string, plaintext string) (string, error) {
 	}
 
 	key := make([]byte, 32)
-	copy(key, []byte(password))
+	copy(key, password)
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return "", err
@@ -198,6 +209,9 @@ func encryptAES(password string, plaintext string) (string, error) {
 	content = append(content, padtext...)
 
 	ciphertext := make([]byte, aes.BlockSize+len(content))
+	//ciphertext := sort.SliceStable(aes.BlockSize+len(content), func(i, j int) bool {
+	//	return len(content) > cap(content)
+	//})
 
 	iv := ciphertext[:aes.BlockSize]
 	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
@@ -216,7 +230,7 @@ func decryptAES(password string, crypt64 string) (string, error) {
 	}
 
 	key := make([]byte, 32)
-	copy(key, []byte(password))
+	copy(key, password)
 
 	crypt, err := base64.StdEncoding.DecodeString(crypt64)
 	if err != nil {
