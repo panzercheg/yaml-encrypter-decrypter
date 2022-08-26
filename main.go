@@ -54,7 +54,7 @@ func main() {
 		encrypted, err := encryptAES(key, encryptValue)
 		fmt.Println(encrypted)
 		if err != nil {
-			log.Fatalf("something wrong during encrypt")
+			log.Fatalf("something went wrong during encrypt")
 		}
 		os.Exit(0)
 	}
@@ -62,7 +62,7 @@ func main() {
 		decrypted, err := decryptAES(key, decryptValue)
 		fmt.Println(decrypted)
 		if err != nil {
-			log.Fatalf("something wrong during decrypt")
+			log.Fatalf("something went wrong during decrypt")
 		}
 		os.Exit(0)
 	}
@@ -88,7 +88,7 @@ func main() {
 
 			encrypted, err := encryptAES(key, value)
 			if err != nil {
-				log.Fatalf("something wrong - %s", err)
+				log.Fatalf("something went wrong - %s", err)
 			}
 			matchedAesEncrypted, _ := regexp.MatchString(AES, value)
 			// check file is encrypted
@@ -125,7 +125,7 @@ func main() {
 				aesBeforeDecrypt := strings.ReplaceAll(value, AES, "")
 				decrypted, err := decryptAES(key, aesBeforeDecrypt)
 				if err != nil {
-					log.Fatalf("something wrong during decrypt")
+					log.Fatalf("something went wrong during decrypt")
 				}
 				if verbose == "true" {
 					fmt.Println(whitespaces + stringArray[0] + " " + decrypted)
@@ -209,10 +209,6 @@ func encryptAES(password string, plaintext string) (string, error) {
 	content = append(content, padtext...)
 
 	ciphertext := make([]byte, aes.BlockSize+len(content))
-	//ciphertext := sort.SliceStable(aes.BlockSize+len(content), func(i, j int) bool {
-	//	return len(content) > cap(content)
-	//})
-
 	iv := ciphertext[:aes.BlockSize]
 	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
 		return "", err

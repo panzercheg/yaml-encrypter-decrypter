@@ -50,11 +50,11 @@ YAML файл можно шифровать и расшифровывать ка
 https://github.com/kruchkov-alexandr/yaml-encrypter-decrypter/releases/
 
 # Как использовать
-У утилиты 6 флагов, значения у 4-ех задано по умолчанию.
+У утилиты 7 флагов, значения у 5-ых задано по умолчанию.
 ```
   -debug string
-        режим откладки, выводит в stdout планируемые изменения, но не изменяет yaml файл
-        debug mode, print encode/decode to stdout (default "false")
+        режим откладки, выводит в stdout планируемые зашифрованные значения, но не изменяет yaml файл
+        debug mode, print cipher value to stdout (default "false")
   -env string
         название-начало блока, значения которых надо шифровать
         block-name for encode/decode (default "env:")
@@ -71,6 +71,9 @@ https://github.com/kruchkov-alexandr/yaml-encrypter-decrypter/releases/
   -encrypt string
         при вводе значения в stdout выводится зашифрованое значение
         value to encrypt
+  -verbose string
+        режим откладки, выводит в stdout все изменения
+        verbose mode, print entire file or all steps (default "false")
 
 ```
 
